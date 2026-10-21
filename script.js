@@ -88,7 +88,7 @@ function budgetStatus(spent) {
 function rowHtml(t, withActions) {
     const inc = t.type === "income";
     return `<tr class="border-b border-gray-100 text-sm">
-        <td class="py-4 font-medium text-gray-800">${esc(t.title)}</td>
+        <td class="py-4 font-medium text-gray-800">${esc(t.title)}${t.recurringId ? ' <span class="ml-1 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Auto</span>' : ""}</td>
         <td class="py-4 text-gray-500">${esc(t.category)}</td>
         <td class="py-4 text-gray-500">${esc(t.date)}</td>
         <td class="py-4 text-right font-semibold ${inc ? "text-green-600" : "text-red-500"}">${inc ? "+" : "-"} ${money(t.amount)}</td>
@@ -103,10 +103,11 @@ const emptyRow = (cols, text) => `<tr><td colspan="${cols}" class="py-10 text-ce
 
 /* ================= Navigation ================= */
 
-const TITLES = { dashboard: "Dashboard", transactions: "Transactions", budget: "Budget", goals: "Goals", reports: "Reports", calculator: "Calculator" };
+const TITLES = { dashboard: "Dashboard", transactions: "Transactions", budget: "Budget", goals: "Goals", recurring: "Recurring", reports: "Reports", calculator: "Calculator" };
 
 function showPage(page) {
     if (!TITLES[page]) page = "dashboard";
+    runRecurring();
     document.querySelectorAll(".page").forEach(p => p.classList.toggle("hidden", p.id !== "page-" + page));
     document.querySelectorAll(".nav-link").forEach(a => a.classList.toggle("active", a.dataset.page === page));
     $("pageTitle").textContent = TITLES[page];
@@ -479,6 +480,109 @@ $("goalList").addEventListener("click", e => {
     renderAll();
 });
 
+/* ================= Recurring transactions ================= */
+
+let recurring = load("recurring", []);
+if (!Array.isArray(recurring)) recurring = [];
+const persistRecurring = () => save("recurring", recurring);
+let idSeq = 0;
+
+function nextKey(k) {
+    const [y, m] = k.split("-").map(Number);
+    const d = new Date(y, m, 1);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+}
+function prevKey(k) {
+    const [y, m] = k.split("-").map(Number);
+    const d = new Date(y, m - 2, 1);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+}
+const dueDate = (key, day) => {
+    const [y, m] = key.split("-").map(Number);
+    return `${key}-${pad(Math.min(day, new Date(y, m, 0).getDate()))}`;
+};
+
+// Adds every due monthly transaction that has not been added yet
+function runRecurring() {
+    const today = localDate(), nowKey = monthKey(today);
+    let added = 0;
+    recurring.forEach(r => {
+        if (!r.active) return;
+        let key = r.lastKey ? nextKey(r.lastKey) : r.start;
+        while (key <= nowKey) {
+            const date = dueDate(key, r.day);
+            if (date > today) break;
+            transactions.push({ id: Date.now() + (idSeq++), title: r.title, type: r.type, category: r.category, amount: r.amount, date, recurringId: r.id });
+            r.lastKey = key;
+            added++;
+            key = nextKey(key);
+        }
+    });
+    if (added) {
+        persist(); persistRecurring();
+        toast(added + " recurring transaction" + (added === 1 ? "" : "s") + " added automatically");
+    }
+}
+
+function renderRecurring() {
+    fillSelect($("recCategory"), CATS[$("recType").value].map(c => [c, c]), true);
+    const out = sum(recurring.filter(r => r.active && r.type === "expense"));
+    const inc = sum(recurring.filter(r => r.active && r.type === "income"));
+    $("recSummary").textContent = "Auto expense per month: " + money(out) + " · Auto income per month: " + money(inc);
+    $("recList").innerHTML = recurring.length ? recurring.map(r => {
+        const inc = r.type === "income";
+        return `<div class="bg-white p-6 rounded-2xl border border-gray-100">
+            <div class="flex justify-between items-start gap-3">
+                <div><h3 class="font-bold text-gray-800 text-lg">${esc(r.title)}</h3>
+                <p class="text-sm text-gray-500 mt-1">${inc ? "Income" : "Expense"} · ${esc(r.category)} · every month on day ${r.day}</p></div>
+                <label class="flex items-center gap-2 text-xs text-gray-500 whitespace-nowrap">${r.active ? "Active" : "Paused"} <span class="switch"><input type="checkbox" data-ract="toggle" data-id="${r.id}" aria-label="Active" ${r.active ? "checked" : ""}><span class="slider"></span></span></label>
+            </div>
+            <p class="text-2xl font-bold mt-4 ${inc ? "text-green-600" : "text-red-500"}">${inc ? "+" : "-"} ${money(r.amount)}</p>
+            <div class="mt-4"><button class="icon-btn del" data-ract="delete" data-id="${r.id}">Delete</button></div></div>`;
+    }).join("") : `<p class="text-sm text-gray-400">No recurring transactions yet. Add rent, WiFi bill or salary above.</p>`;
+}
+
+$("recType").addEventListener("change", renderRecurring);
+
+$("recForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const title = $("recName").value.trim(), amount = Number($("recAmount").value), day = Math.floor(Number($("recDay").value));
+    if (!title) return toast("Enter a name", "error");
+    if (!(amount > 0)) return toast("Amount must be greater than 0", "error");
+    if (!(day >= 1 && day <= 31)) return toast("Day must be between 1 and 31", "error");
+    snapshot();
+    recurring.push({ id: Date.now(), title, type: $("recType").value, category: $("recCategory").value, amount, day, active: true, start: monthKey(localDate()), lastKey: null });
+    persistRecurring();
+    runRecurring();
+    $("recForm").reset();
+    $("recDay").value = 1;
+    renderAll();
+    toast("Recurring transaction added");
+});
+
+$("recList").addEventListener("click", e => {
+    const b = e.target.closest("[data-ract]");
+    if (!b) return;
+    const r = recurring.find(x => x.id == b.dataset.id);
+    if (!r) return;
+    if (b.dataset.ract === "toggle") {
+        snapshot();
+        r.active = !r.active;
+        if (r.active) { // resume from the next due month, no back-filling of paused months
+            const nowKey = monthKey(localDate());
+            r.lastKey = dueDate(nowKey, r.day) <= localDate() ? nowKey : prevKey(nowKey);
+        }
+        toast(r.active ? "Recurring turned ON" : "Recurring paused");
+        if (r.active) runRecurring();
+    } else if (b.dataset.ract === "delete") {
+        if (!confirm("Delete this recurring item? Transactions already added will stay.")) return renderAll();
+        snapshot();
+        recurring = recurring.filter(x => x !== r);
+    }
+    persistRecurring();
+    renderAll();
+});
+
 /* ================= Calculator ================= */
 
 const SYM = { "+": "+", "-": "−", "*": "×", "/": "÷" };
@@ -576,7 +680,7 @@ document.addEventListener("keydown", e => {
 const undoStack = [];
 function updateUndoBtn() { $("undoBtn").disabled = !undoStack.length; }
 function snapshot() {
-    undoStack.push(JSON.stringify({ transactions, goals, budget }));
+    undoStack.push(JSON.stringify({ transactions, goals, budget, recurring }));
     if (undoStack.length > 20) undoStack.shift();
     updateUndoBtn();
 }
@@ -584,8 +688,8 @@ function snapshot() {
 $("undoBtn").addEventListener("click", () => {
     if (!undoStack.length) return;
     const s = JSON.parse(undoStack.pop());
-    transactions = s.transactions; goals = s.goals; budget = s.budget;
-    persist(); persistGoals(); save("budget", budget);
+    transactions = s.transactions; goals = s.goals; budget = s.budget; recurring = s.recurring || [];
+    persist(); persistGoals(); persistRecurring(); save("budget", budget);
     updateUndoBtn();
     renderAll();
     toast("Last action undone");
@@ -594,8 +698,8 @@ $("undoBtn").addEventListener("click", () => {
 $("resetBtn").addEventListener("click", () => {
     if (!confirm("Reset everything? All transactions, goals and the budget will be deleted. You can still press Undo right after.")) return;
     snapshot();
-    transactions = []; goals = []; budget = 0;
-    persist(); persistGoals(); save("budget", 0);
+    transactions = []; goals = []; budget = 0; recurring = [];
+    persist(); persistGoals(); persistRecurring(); save("budget", 0);
     renderAll();
     toast("All data reset");
 });
@@ -648,6 +752,7 @@ function renderAll() {
     if (!$("page-transactions").classList.contains("hidden")) renderTransactions();
     if (!$("page-budget").classList.contains("hidden")) renderBudget();
     if (!$("page-goals").classList.contains("hidden")) renderGoals();
+    if (!$("page-recurring").classList.contains("hidden")) renderRecurring();
     if (!$("page-reports").classList.contains("hidden")) renderReports();
 }
 
@@ -655,5 +760,6 @@ applyTheme(load("theme", "light"));
 $("currentDate").textContent = "Welcome back! " + new Date().toDateString();
 persist();
 updateCategoryOptions();
+runRecurring();
 runAutoSave();
 showPage(location.hash.slice(1));
