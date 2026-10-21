@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyMate | Personal Finance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar bg-white border-r border-gray-200 p-6">
+        <h1 class="text-2xl font-bold text-green-600 mb-10">MoneyMate</h1>
+        <p class="text-xs text-gray-400 uppercase mb-4">Main Menu</p>
+        <nav class="space-y-2">
+            <a href="#dashboard" class="nav-link" data-page="dashboard"><span>▦</span> Dashboard</a>
+            <a href="#transactions" class="nav-link" data-page="transactions"><span>↕</span> Transactions</a>
+            <a href="#budget" class="nav-link" data-page="budget"><span>◎</span> Budget</a>
+            <a href="#reports" class="nav-link" data-page="reports"><span>▤</span> Reports</a>
+        </nav>
+        <div class="mt-12 p-4 bg-green-50 rounded-xl">
+            <p class="text-sm font-semibold text-green-800">Money Tip</p>
+            <p class="text-xs text-green-700 mt-2">Save a little today for a better tomorrow!</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-8 min-w-0">
+
+        <!-- Header -->
+        <header class="flex flex-wrap justify-between items-center gap-4 mb-8">
+            <div>
+                <p class="text-gray-500 text-sm" id="currentDate">Welcome back!</p>
+                <h2 class="text-2xl font-bold text-gray-800 mt-1" id="pageTitle">Dashboard</h2>
+            </div>
+            <button id="addTransactionBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-medium transition">+ Add Transaction</button>
+        </header>
+
+        <!-- ============ DASHBOARD ============ -->
+        <section id="page-dashboard" class="page">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+                <div class="summary-card bg-white p-6 rounded-2xl border border-gray-100">
+                    <p class="text-gray-500 text-sm">Total Balance</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-3" id="totalBalance">৳ 0</h3>
+                    <p class="text-sm text-green-600 mt-3">Your available balance</p>
+                </div>
+                <div class="summary-card bg-white p-6 rounded-2xl border border-gray-100">
+                    <p class="text-gray-500 text-sm">Total Income</p>
+                    <h3 class="text-3xl font-bold text-green-600 mt-3" id="totalIncome">৳ 0</h3>
+                    <p class="text-sm text-gray-500 mt-3">Money received</p>
+                </div>
+                <div class="summary-card bg-white p-6 rounded-2xl border border-gray-100">
+                    <p class="text-gray-500 text-sm">Total Expense</p>
+                    <h3 class="text-3xl font-bold text-red-500 mt-3" id="totalExpense">৳ 0</h3>
+                    <p class="text-sm text-gray-500 mt-3">Money spent</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Monthly Budget</h3>
+                        <p class="text-sm text-gray-500 mt-1">Your monthly spending limit</p>
+                    </div>
+                    <span class="text-green-600 font-semibold" id="dashMonth">Month</span>
+                </div>
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-500" id="dashSpent">Spent: ৳ 0</span>
+                    <span class="font-semibold text-gray-800" id="dashBudget">৳ 0</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-3"><div id="dashBar" class="bg-green-500 h-3 rounded-full" style="width:0%"></div></div>
+                <p class="text-sm mt-3" id="dashRemain"></p>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">Recent Transactions</h3>
+                        <p class="text-sm text-gray-500 mt-1">Your latest financial activities</p>
+                    </div>
+                    <button id="viewAllBtn" class="text-green-600 text-sm font-semibold">View All</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead><tr class="text-gray-400 text-sm border-b">
+                            <th class="pb-4">Transaction</th><th class="pb-4">Category</th><th class="pb-4">Date</th><th class="pb-4 text-right">Amount</th>
+                        </tr></thead>
+                        <tbody id="recentList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ TRANSACTIONS ============ -->
+        <section id="page-transactions" class="page hidden">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <input id="searchInput" type="search" placeholder="Search by name or category" class="border rounded-lg p-3 text-sm outline-green-500 lg:col-span-1">
+                    <select id="filterType" class="border rounded-lg p-3 text-sm outline-green-500">
+                        <option value="all">All types</option><option value="income">Income</option><option value="expense">Expense</option>
+                    </select>
+                    <select id="filterCategory" class="border rounded-lg p-3 text-sm outline-green-500"></select>
+                    <select id="filterMonth" class="border rounded-lg p-3 text-sm outline-green-500"></select>
+                </div>
+                <p class="text-sm text-gray-500 mb-4" id="txCount"></p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead><tr class="text-gray-400 text-sm border-b">
+                            <th class="pb-4">Transaction</th><th class="pb-4">Category</th><th class="pb-4">Date</th><th class="pb-4 text-right">Amount</th><th class="pb-4 text-right">Actions</th>
+                        </tr></thead>
+                        <tbody id="txList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ BUDGET ============ -->
+        <section id="page-budget" class="page hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+                <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                    <h3 class="font-bold text-gray-800 text-lg">Set Monthly Budget</h3>
+                    <p class="text-sm text-gray-500 mt-1 mb-4">The same limit applies to every month.</p>
+                    <form id="budgetForm" class="flex gap-3">
+                        <input id="budgetInput" type="number" min="1" step="1" placeholder="Budget in BDT" class="flex-1 border rounded-lg p-3 outline-green-500" required>
+                        <button class="bg-green-600 hover:bg-green-700 text-white px-5 rounded-lg font-semibold">Save budget</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800 text-lg">This Month</h3>
+                        <span class="text-green-600 font-semibold" id="budMonth"></span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-500" id="budSpent"></span>
+                        <span class="font-semibold text-gray-800" id="budTotal"></span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-3"><div id="budBar" class="h-3 rounded-full" style="width:0%"></div></div>
+                    <p class="text-sm mt-3" id="budRemain"></p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                <h3 class="font-bold text-gray-800 text-lg mb-4">Spending by Category this Month</h3>
+                <div id="budCats" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <!-- ============ REPORTS ============ -->
+        <section id="page-reports" class="page hidden">
+            <div class="flex items-center gap-3 mb-5">
+                <label for="repMonth" class="text-sm text-gray-500">Period</label>
+                <select id="repMonth" class="border rounded-lg p-2 text-sm outline-green-500 bg-white"></select>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+                <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-gray-500 text-sm">Income</p><p class="text-2xl font-bold text-green-600 mt-2" id="repIncome"></p></div>
+                <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-gray-500 text-sm">Expense</p><p class="text-2xl font-bold text-red-500 mt-2" id="repExpense"></p></div>
+                <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-gray-500 text-sm">Saved</p><p class="text-2xl font-bold text-gray-800 mt-2" id="repSaved"></p></div>
+            </div>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-8">
+                <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                    <h3 class="font-bold text-gray-800 text-lg mb-4">Income vs Expense (last 6 months)</h3>
+                    <div class="chart-box"><canvas id="barChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                    <h3 class="font-bold text-gray-800 text-lg mb-4">Expense by Category</h3>
+                    <div class="chart-box"><canvas id="pieChart"></canvas></div>
+                    <p class="text-sm text-gray-400 text-center hidden" id="pieEmpty">No expenses in this period.</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100">
+                <h3 class="font-bold text-gray-800 text-lg mb-4">Category-wise Analysis</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead><tr class="text-gray-400 border-b"><th class="pb-3">Category</th><th class="pb-3 text-right">Spent</th><th class="pb-3 text-right">Share</th></tr></thead>
+                        <tbody id="repCats"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-gray-400 text-sm mt-8">© 2026 MoneyMate. Personal Finance Tracker.</footer>
+    </main>
+</div>
+
+<!-- Add / Edit Transaction Modal -->
+<div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-full overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800" id="modalTitle">Add Transaction</h2>
+            <button id="closeModal" type="button" class="text-gray-500 text-2xl hover:text-red-500" aria-label="Close">&times;</button>
+        </div>
+        <form id="transactionForm">
+            <label class="block text-sm font-medium mb-2" for="type">Transaction Type</label>
+            <select id="type" class="w-full border rounded-lg p-3 mb-4 outline-green-500">
+                <option value="income">Income</option><option value="expense">Expense</option>
+            </select>
+
+            <label class="block text-sm font-medium mb-2" for="title">Transaction Name</label>
+            <input type="text" id="title" maxlength="60" placeholder="Example: Salary, Lunch" class="w-full border rounded-lg p-3 mb-4 outline-green-500" required>
+
+            <label class="block text-sm font-medium mb-2" for="category">Category</label>
+            <select id="category" class="w-full border rounded-lg p-3 mb-4 outline-green-500"></select>
+
+            <label class="block text-sm font-medium mb-2" for="amount">Amount (BDT)</label>
+            <input type="number" id="amount" placeholder="Enter amount" min="0.01" step="0.01" class="w-full border rounded-lg p-3 mb-4 outline-green-500" required>
+
+            <label class="block text-sm font-medium mb-2" for="date">Date</label>
+            <input type="date" id="date" class="w-full border rounded-lg p-3 mb-6 outline-green-500" required>
+
+            <button type="submit" id="saveBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-semibold">Save Transaction</button>
+        </form>
+    </div>
+</div>
+
+<div id="toastBox" class="fixed bottom-5 right-5 z-[60] space-y-2"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

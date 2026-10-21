@@ -1,0 +1,57 @@
+/* General */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, sans-serif; }
+
+/* Sidebar */
+.sidebar { width: 250px; min-height: 100vh; flex-shrink: 0; }
+.nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 15px; border-radius: 10px;
+    color: #6b7280; font-size: 14px; transition: 0.3s;
+}
+.nav-link:hover { background-color: #f0fdf4; color: #16a34a; }
+.nav-link.active { background-color: #dcfce7; color: #15803d; font-weight: bold; }
+.nav-link:focus-visible, button:focus-visible { outline: 2px solid #16a34a; outline-offset: 2px; }
+
+/* Cards */
+.summary-card { transition: 0.3s; }
+.summary-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05); }
+
+/* Tables */
+tbody tr:hover { background-color: #f9fafb; }
+.icon-btn { font-size: 13px; padding: 4px 10px; border-radius: 8px; transition: 0.2s; }
+.icon-btn.edit { color: #15803d; background: #f0fdf4; }
+.icon-btn.edit:hover { background: #dcfce7; }
+.icon-btn.del { color: #dc2626; background: #fef2f2; margin-left: 6px; }
+.icon-btn.del:hover { background: #fee2e2; }
+
+/* Charts */
+.chart-box { position: relative; height: 280px; }
+
+/* Toast */
+.toast {
+    padding: 12px 18px; border-radius: 10px; color: #fff; font-size: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    animation: toastIn 0.25s ease;
+}
+.toast.success { background: #16a34a; }
+.toast.error { background: #dc2626; }
+.toast.warn { background: #d97706; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .sidebar { width: 75px; padding: 12px; }
+    .sidebar h1 { font-size: 13px; margin-bottom: 30px; word-break: break-word; }
+    .sidebar nav a { font-size: 0; justify-content: center; padding: 14px 5px; }
+    .sidebar nav a span { font-size: 20px; }
+    .sidebar > div:last-child { display: none; }
+}
+
+@media (max-width: 480px) {
+    main { padding: 15px !important; }
+}
