@@ -24,6 +24,7 @@
             <a href="#transactions" class="nav-link" data-page="transactions"><span>↕</span> Transactions</a>
             <a href="#budget" class="nav-link" data-page="budget"><span>◎</span> Budget</a>
             <a href="#goals" class="nav-link" data-page="goals"><span>◈</span> Goals</a>
+            <a href="#recurring" class="nav-link" data-page="recurring"><span>⟳</span> Recurring</a>
             <a href="#reports" class="nav-link" data-page="reports"><span>▤</span> Reports</a>
             <a href="#calculator" class="nav-link" data-page="calculator"><span>⊞</span> Calculator</a>
         </nav>
@@ -192,6 +193,27 @@
                 <p class="text-xs text-gray-400 mt-3">The monthly amount is saved automatically while Auto-Save is ON. Saved money is locked and removed from your available balance.</p>
             </div>
             <div id="goalList" class="grid grid-cols-1 xl:grid-cols-2 gap-5"></div>
+        </section>
+
+        <!-- ============ RECURRING ============ -->
+        <section id="page-recurring" class="page hidden">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 mb-8">
+                <h3 class="font-bold text-gray-800 text-lg">Add Recurring Transaction</h3>
+                <p class="text-sm text-gray-500 mt-1 mb-4" id="recSummary"></p>
+                <form id="recForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <select id="recType" class="border rounded-lg p-3 text-sm outline-green-500" aria-label="Type">
+                        <option value="expense">Expense (e.g. Rent, WiFi)</option>
+                        <option value="income">Income (e.g. Salary)</option>
+                    </select>
+                    <input id="recName" type="text" maxlength="60" placeholder="Name (e.g. House rent)" class="border rounded-lg p-3 text-sm outline-green-500" required>
+                    <select id="recCategory" class="border rounded-lg p-3 text-sm outline-green-500" aria-label="Category"></select>
+                    <input id="recAmount" type="number" min="0.01" step="0.01" placeholder="Amount (BDT)" class="border rounded-lg p-3 text-sm outline-green-500" required>
+                    <input id="recDay" type="number" min="1" max="31" step="1" value="1" placeholder="Day of month (1-31)" class="border rounded-lg p-3 text-sm outline-green-500" aria-label="Day of month" required>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg font-semibold text-sm">Add Recurring</button>
+                </form>
+                <p class="text-xs text-gray-400 mt-3">Added automatically every month on the chosen day (day 1 = start of the month). If a month is shorter, the last day of that month is used.</p>
+            </div>
+            <div id="recList" class="grid grid-cols-1 xl:grid-cols-2 gap-5"></div>
         </section>
 
         <!-- ============ REPORTS ============ -->
