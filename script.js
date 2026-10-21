@@ -128,7 +128,26 @@ function renderDashboard() {
     $("totalBalance").className = "text-3xl font-bold mt-3 " + (avail < 0 ? "text-red-500" : "text-gray-800");
     $("balNote").textContent = lockedTotal() > 0 ? "Locked in goals: " + money(lockedTotal()) : "Your available balance";
 
-    const spent = sum(transactions.filter(t => t.type === "expense" && monthKey(t.date) === thisMonth));
+    // This month's income / expense
+    const monthName = MONTHS[+thisMonth.slice(5) - 1];
+    const monthInc = sum(transactions.filter(t => t.type === "income" && monthKey(t.date) === thisMonth));
+    const monthExp = sum(transactions.filter(t => t.type === "expense" && monthKey(t.date) === thisMonth));
+    $("incMonthName").textContent = monthName;
+    $("expMonthName").textContent = monthName;
+    $("monthIncome").textContent = money(monthInc);
+    $("monthExpense").textContent = money(monthExp);
+
+    // Money left from the previous month (its income minus its expense)
+    const pd = new Date(+thisMonth.slice(0, 4), +thisMonth.slice(5) - 2, 1);
+    const prevKey = `${pd.getFullYear()}-${pad(pd.getMonth() + 1)}`;
+    const prevInc = sum(transactions.filter(t => t.type === "income" && monthKey(t.date) === prevKey));
+    const prevExp = sum(transactions.filter(t => t.type === "expense" && monthKey(t.date) === prevKey));
+    const prevNet = prevInc - prevExp;
+    $("prevLeft").textContent = money(prevNet);
+    $("prevLeft").className = "text-3xl font-bold mt-3 " + (prevNet < 0 ? "text-red-500" : "text-gray-800");
+    $("prevNote").textContent = monthLabel(prevKey) + ": " + money(prevInc) + " − " + money(prevExp);
+
+    const spent = monthExp;
     const s = budgetStatus(spent);
     $("dashMonth").textContent = MONTHS[+thisMonth.slice(5) - 1];
     $("dashSpent").textContent = "Spent: " + money(spent);
