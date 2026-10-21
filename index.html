@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MoneyMate | Personal Finance</title>
+    <script>
+        // Apply saved theme before the page paints (prevents a light flash)
+        try { document.documentElement.setAttribute("data-theme", JSON.parse(localStorage.getItem("theme")) === "dark" ? "dark" : "light"); } catch (e) {}
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -19,7 +23,9 @@
             <a href="#dashboard" class="nav-link" data-page="dashboard"><span>▦</span> Dashboard</a>
             <a href="#transactions" class="nav-link" data-page="transactions"><span>↕</span> Transactions</a>
             <a href="#budget" class="nav-link" data-page="budget"><span>◎</span> Budget</a>
+            <a href="#goals" class="nav-link" data-page="goals"><span>◈</span> Goals</a>
             <a href="#reports" class="nav-link" data-page="reports"><span>▤</span> Reports</a>
+            <a href="#calculator" class="nav-link" data-page="calculator"><span>⊞</span> Calculator</a>
         </nav>
         <div class="mt-12 p-4 bg-green-50 rounded-xl">
             <p class="text-sm font-semibold text-green-800">Money Tip</p>
@@ -35,7 +41,18 @@
                 <p class="text-gray-500 text-sm" id="currentDate">Welcome back!</p>
                 <h2 class="text-2xl font-bold text-gray-800 mt-1" id="pageTitle">Dashboard</h2>
             </div>
-            <button id="addTransactionBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-medium transition">+ Add Transaction</button>
+            <div class="flex flex-wrap gap-2">
+                <div class="relative" id="themeWrap">
+                    <button id="themeBtn" type="button" aria-haspopup="true" aria-expanded="false" class="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-3 rounded-xl text-sm font-medium transition">🎨 Theme</button>
+                    <div id="themeMenu" class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-40" role="menu">
+                        <button type="button" class="theme-opt w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100" data-theme-value="light" role="menuitemradio">☀️ Light</button>
+                        <button type="button" class="theme-opt w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100" data-theme-value="dark" role="menuitemradio">🌙 Dark</button>
+                    </div>
+                </div>
+                <button id="undoBtn" type="button" class="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-3 rounded-xl text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>↶ Undo</button>
+                <button id="resetBtn" type="button" class="bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-3 rounded-xl text-sm font-medium transition">Reset</button>
+                <button id="addTransactionBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-medium transition">+ Add Transaction</button>
+            </div>
         </header>
 
         <!-- ============ DASHBOARD ============ -->
@@ -44,7 +61,7 @@
                 <div class="summary-card bg-white p-6 rounded-2xl border border-gray-100">
                     <p class="text-gray-500 text-sm">Total Balance</p>
                     <h3 class="text-3xl font-bold text-gray-800 mt-3" id="totalBalance">৳ 0</h3>
-                    <p class="text-sm text-green-600 mt-3">Your available balance</p>
+                    <p class="text-sm text-green-600 mt-3" id="balNote">Your available balance</p>
                 </div>
                 <div class="summary-card bg-white p-6 rounded-2xl border border-gray-100">
                     <p class="text-gray-500 text-sm">Total Income</p>
@@ -146,6 +163,22 @@
             </div>
         </section>
 
+        <!-- ============ GOALS ============ -->
+        <section id="page-goals" class="page hidden">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 mb-8">
+                <h3 class="font-bold text-gray-800 text-lg">Create a Goal</h3>
+                <p class="text-sm text-gray-500 mt-1 mb-4" id="goalAvail"></p>
+                <form id="goalForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <input id="goalName" type="text" maxlength="40" placeholder="Goal name (e.g. New phone)" class="border rounded-lg p-3 text-sm outline-green-500" required>
+                    <input id="goalTarget" type="number" min="1" step="1" placeholder="Target amount (BDT)" class="border rounded-lg p-3 text-sm outline-green-500" required>
+                    <input id="goalMonths" type="number" min="1" max="60" step="1" placeholder="Number of months" class="border rounded-lg p-3 text-sm outline-green-500" required>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg font-semibold text-sm">Create Goal</button>
+                </form>
+                <p class="text-xs text-gray-400 mt-3">The monthly amount is saved automatically while Auto-Save is ON. Saved money is locked and removed from your available balance.</p>
+            </div>
+            <div id="goalList" class="grid grid-cols-1 xl:grid-cols-2 gap-5"></div>
+        </section>
+
         <!-- ============ REPORTS ============ -->
         <section id="page-reports" class="page hidden">
             <div class="flex items-center gap-3 mb-5">
@@ -179,7 +212,47 @@
             </div>
         </section>
 
-        <footer class="text-center text-gray-400 text-sm mt-8">© 2026 MoneyMate. Personal Finance Tracker.</footer>
+        <!-- ============ CALCULATOR ============ -->
+        <section id="page-calculator" class="page hidden">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 mx-auto w-full max-w-sm">
+                <div class="calc-display rounded-xl p-4 mb-4 text-right">
+                    <p class="text-sm text-gray-400 h-5 truncate" id="calcExpr"></p>
+                    <p class="text-4xl font-bold text-gray-800 mt-1 truncate" id="calcScreen">0</p>
+                </div>
+                <div class="grid grid-cols-4 gap-3" id="calcPad">
+                    <button type="button" class="calc-btn fn" data-calc="clear">AC</button>
+                    <button type="button" class="calc-btn fn" data-calc="back" aria-label="Backspace">⌫</button>
+                    <button type="button" class="calc-btn fn" data-calc="percent">%</button>
+                    <button type="button" class="calc-btn op" data-calc="op" data-v="/" aria-label="Divide">÷</button>
+
+                    <button type="button" class="calc-btn" data-calc="num" data-v="7">7</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="8">8</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="9">9</button>
+                    <button type="button" class="calc-btn op" data-calc="op" data-v="*" aria-label="Multiply">×</button>
+
+                    <button type="button" class="calc-btn" data-calc="num" data-v="4">4</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="5">5</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="6">6</button>
+                    <button type="button" class="calc-btn op" data-calc="op" data-v="-" aria-label="Subtract">−</button>
+
+                    <button type="button" class="calc-btn" data-calc="num" data-v="1">1</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="2">2</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="3">3</button>
+                    <button type="button" class="calc-btn op" data-calc="op" data-v="+" aria-label="Add">+</button>
+
+                    <button type="button" class="calc-btn" data-calc="sign" aria-label="Plus or minus">±</button>
+                    <button type="button" class="calc-btn" data-calc="num" data-v="0">0</button>
+                    <button type="button" class="calc-btn" data-calc="dot">.</button>
+                    <button type="button" class="calc-btn eq" data-calc="eq">=</button>
+                </div>
+                <p class="text-xs text-gray-400 mt-4 text-center">Keyboard works too: 0-9, + − * /, Enter, Backspace, % and C to clear.</p>
+            </div>
+        </section>
+
+        <footer class="text-center text-gray-400 text-sm mt-8">
+            <p>© 2026 MoneyMate. Personal Finance Tracker.</p>
+            <p class="mt-1">This project is made by <span class="font-semibold text-gray-500">Tafhimur Rahman Samin</span>, International Islamic University Chittagong</p>
+        </footer>
     </main>
 </div>
 
