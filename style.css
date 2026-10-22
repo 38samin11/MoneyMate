@@ -76,17 +76,56 @@ tbody tr:hover { background-color: #f9fafb; }
     * { transition: none !important; animation: none !important; }
 }
 
-/* Mobile */
+/* Long text never overflows its card */
+.summary-card h3, #goalList h3, #recList h3 { overflow-wrap: anywhere; }
+#goalList .flex > div:first-child, #recList .flex > div:first-child { min-width: 0; }
+#budgetForm input { min-width: 0; }
+
+/* Tablet */
+@media (max-width: 1024px) {
+    aside.sidebar { width: 200px; padding: 16px; }
+}
+
+/* Mobile: sidebar becomes a bottom navigation bar, full width for content */
 @media (max-width: 768px) {
-    .sidebar { width: 75px; padding: 12px; }
-    .sidebar h1 { font-size: 13px; margin-bottom: 30px; word-break: break-word; }
-    .sidebar nav a { font-size: 0; justify-content: center; padding: 14px 5px; }
-    .sidebar nav a span { font-size: 20px; }
-    .sidebar > div:last-child { display: none; }
+    aside.sidebar {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        width: 100%; min-height: 0; z-index: 45;
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        border-right-width: 0; border-top-width: 1px;
+    }
+    .sidebar h1, .sidebar > p, .sidebar > div { display: none; }
+    .sidebar nav { display: flex; gap: 4px; overflow-x: auto; margin: 0; }
+    .sidebar nav > * { margin: 0 !important; }
+    .sidebar nav a {
+        flex: 1 0 68px; flex-direction: column; justify-content: center; gap: 2px;
+        padding: 8px 6px; font-size: 11px; text-align: center; white-space: nowrap;
+    }
+    .sidebar nav a span { font-size: 18px; line-height: 1; }
+    main { padding-bottom: 90px !important; }
+    #toastBox { bottom: 80px !important; left: 12px; right: 12px !important; }
+}
+
+@media (max-width: 640px) {
+    .summary-card h3 { font-size: 26px; }
+
+    /* Tables turn into stacked cards, nothing is cut off */
+    table.rtable, .rtable tbody, .rtable tr, .rtable td { display: block; width: 100%; }
+    .rtable thead { display: none; }
+    .rtable tr { padding: 10px 0; }
+    .rtable td {
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 12px; padding: 4px 0; text-align: right;
+    }
+    .rtable td::before { content: attr(data-label); color: #9ca3af; font-size: 12px; text-align: left; flex-shrink: 0; }
+    .rtable td:first-child { justify-content: flex-start; text-align: left; font-size: 15px; }
+    .rtable td:first-child::before, .rtable td[data-label="Actions"]::before { content: none; }
+    .rtable td[data-label="Actions"] { justify-content: flex-end; padding-top: 8px; }
+    .rtable td[colspan] { display: block; text-align: center; }
 }
 
 @media (max-width: 480px) {
-    main { padding: 15px !important; }
+    main { padding: 15px 15px 90px !important; }
 }
 /* ================= Dark theme ================= */
 html[data-theme="dark"] { color-scheme: dark; }
