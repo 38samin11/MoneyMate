@@ -89,10 +89,10 @@ function rowHtml(t, withActions) {
     const inc = t.type === "income";
     return `<tr class="border-b border-gray-100 text-sm">
         <td class="py-4 font-medium text-gray-800">${esc(t.title)}${t.recurringId ? ' <span class="ml-1 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Auto</span>' : ""}</td>
-        <td class="py-4 text-gray-500">${esc(t.category)}</td>
-        <td class="py-4 text-gray-500">${esc(t.date)}</td>
-        <td class="py-4 text-right font-semibold ${inc ? "text-green-600" : "text-red-500"}">${inc ? "+" : "-"} ${money(t.amount)}</td>
-        ${withActions ? `<td class="py-4 text-right whitespace-nowrap">
+        <td data-label="Category" class="py-4 text-gray-500">${esc(t.category)}</td>
+        <td data-label="Date" class="py-4 text-gray-500">${esc(t.date)}</td>
+        <td data-label="Amount" class="py-4 text-right font-semibold ${inc ? "text-green-600" : "text-red-500"}">${inc ? "+" : "-"} ${money(t.amount)}</td>
+        ${withActions ? `<td data-label="Actions" class="py-4 text-right whitespace-nowrap">
             <button class="icon-btn edit" data-edit="${t.id}">Edit</button>
             <button class="icon-btn del" data-del="${t.id}">Delete</button></td>` : ""}
     </tr>`;
@@ -608,7 +608,9 @@ function calcCompute(a, op, b) {
     return b === 0 ? NaN : a / b;
 }
 function calcRender() {
-    $("calcScreen").textContent = calcShow(calc.cur);
+    const shown = calcShow(calc.cur);
+    $("calcScreen").textContent = shown;
+    $("calcScreen").style.fontSize = shown.length > 16 ? "20px" : shown.length > 11 ? "26px" : "";
     $("calcExpr").textContent = calc.expr;
     document.querySelectorAll("#calcPad .calc-btn.op").forEach(b =>
         b.classList.toggle("pending", calc.opJust && b.dataset.v === calc.op));
@@ -755,6 +757,9 @@ function renderAll() {
     if (!$("page-recurring").classList.contains("hidden")) renderRecurring();
     if (!$("page-reports").classList.contains("hidden")) renderReports();
 }
+
+// Tables that become stacked cards on small screens
+["recentList", "txList"].forEach(id => $(id).closest("table").classList.add("rtable"));
 
 applyTheme(load("theme", "light"));
 $("currentDate").textContent = "Welcome back! " + new Date().toDateString();
